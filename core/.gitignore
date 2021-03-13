@@ -1,0 +1,10 @@
+venv
+.idea
+__pycache__/
+*.pyc
+*.pyo
+config.yml
+logs/
+*.log
+export
+.env
