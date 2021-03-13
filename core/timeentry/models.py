@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 # Create your models here.
 class Task(models.Model):
@@ -19,6 +20,7 @@ class Task(models.Model):
     start = models.DateTimeField(auto_now=False, auto_now_add=False,null=True)
     finish = models.DateTimeField(auto_now=False, auto_now_add=False,null=True)
     created_at = models.DateTimeField(auto_now = True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
 
     class Meta:
