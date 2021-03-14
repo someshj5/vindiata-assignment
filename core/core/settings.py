@@ -60,7 +60,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': "%Y-%m-%d - %H:%M:%S", 
+    'DATETIME_FORMAT': "%Y-%m-%d - %H:%M:%S",
 }
 
 TEMPLATES = [
@@ -136,5 +136,5 @@ STATIC_URL = '/static/'
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ORIGIN_WHITELIST = (
-  'http://localhost:3000',
+    'http://localhost:3000',
 )
