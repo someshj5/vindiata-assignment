@@ -60,7 +60,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': "%Y-%m-%d - %H:%M:%S",
+    'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%SZ",
 }
 
 TEMPLATES = [

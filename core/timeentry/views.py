@@ -11,6 +11,8 @@ from django.utils.decorators import method_decorator
 import jwt
 from rest_framework.decorators import api_view
 from datetime import datetime
+from django.contrib.auth.models import User
+from datetime import datetime
 
 # from .decorators import loginRequired
 
@@ -39,7 +41,11 @@ class CreateTaskView(APIView):
         try:
             token = request.headers['Authorization']
             if token:
-                taskList = Task.objects.all()
+                key = 'core'
+                decoded = jwt.decode(token, key, algorithms=['HS256'])
+                user = User.objects.get(pk=decoded['user_id'])
+                print(user)
+                taskList = Task.objects.filter(created_by=user)
                 if taskList:
                     serializer = TaskSerializer(taskList, many=True)
                     custom_response = get_custom_response(
@@ -60,9 +66,12 @@ class CreateTaskView(APIView):
         """
         try:
             token = request.headers['Authorization']
+            print('called')
             if token:
                 key = 'core'
                 decoded = jwt.decode(token, key, algorithms=['HS256'])
+                user = User.objects.get(pk=decoded['user_id'])
+                print(user)
                 payload = {
                     "name": request.data.get('name'),
                     "project": request.data.get('project'),
@@ -74,8 +83,10 @@ class CreateTaskView(APIView):
                     "created_by": decoded['user_id']
                 }
                 serializer = TaskSerializer(data=payload)
+                print(serializer, 'serializers')
                 if serializer.is_valid():
-                    serializer.save()
+                    print('valid')
+                    serializer.save(created_by=user)
                     custom_response = get_custom_response(
                         success=True, message="Sucessful", data=serializer.data, status=200)
                     return custom_response
@@ -87,7 +98,7 @@ class CreateTaskView(APIView):
                 return error
 
         except Exception as e:
-            print(e, 'e----------')
+            print(e, '-------')
             error = get_custom_response()
             return error
 
@@ -100,27 +111,32 @@ def tasks_by_date(request):
         json : returns the json response for the task by date range
     """
     try:
-        if request.method == POST:
-            from_date = request.data.get('from_date')
-            to_date = request.data.get('to_date')
+        if request.method == "POST":
+            token = request.headers['Authorization']
+            if token:
+                from_date = request.data.get('from_date')
+                to_date = request.data.get('to_date')
+                if from_date and to_date:
+                    results = Task.objects.filter(
+                        start_time__range=[from_date, to_date])
+                    if results:
+                        serializer = TaskSerializer(results, many=True)
+                        custom_response = get_custom_response(
+                            success=True, message="Sucessful", data=serializer.data, status=200)
+                        return custom_response
+                    else:
+                        error = get_custom_response(
+                            message="No results found", status=200)
+                        return error
 
-            if from_date and to_date:
-
-                results = Task.objects.filter(
-                    created_at__range=[from_date, to_date])
-                if results:
-                    serializer = TaskSerializer(results, many=True)
-                    custom_response = get_custom_response(
-                        success=True, message="Sucessful", data=serializer.data, status=200)
-                    return custom_response
-            else:
-                error = get_custom_response()
-                return error
+                else:
+                    error = get_custom_response()
+                    return error
         else:
             error = get_custom_response()
             return error
 
-    except Exception:
+    except Exception as e:
         response = get_custom_response()
         return response
 
@@ -142,7 +158,6 @@ def get_project_fields(request):
             return error
 
     except Exception as e:
-        print(e)
         response = get_custom_response()
         return response
 
@@ -153,15 +168,13 @@ class TaskView(APIView):
         """ This is the api for fetching a specific task by its primary key
 
         Args:
-\            pk (int): primary key for the task model
+           pk (int): primary key for the task model
 
         Returns:
-            json : returns the json response 
+            json : returns the json response
         """
         try:
-            print(request.headers)
             token = request.headers['Authorization']
-            print(token, 'token')
             if token:
                 task = Task.objects.get(pk=pk)
                 if task is None:
@@ -187,27 +200,43 @@ class TaskView(APIView):
             if token:
                 key = 'core'
                 decoded = jwt.decode(token, key, algorithms=['HS256'])
+                user = User.objects.get(pk=decoded['user_id'])
                 task = Task.objects.get(pk=pk)
                 if task is None:
                     error = get_custom_response()
                     return error
 
                 elif task:
+                    payload = {
+                        "name": request.data.get('name'),
+                        "project": request.data.get('project'),
+                        "start_time": request.data.get('start_time'),
+                        "end_time": request.data.get('end_time'),
+                        "start": request.data.get('start'),
+                        "finish": request.data.get('finish'),
+                        "created_at": request.data.get('created_at'),
+                        "created_by": decoded['user_id']
+                    }
                     serializer = TaskSerializer(
-                        data=request.data, partial=True)
-                    if serializer.is_valid():
+                        data=payload, partial=True)
+                    if serializer.is_valid(raise_exception=True):
                         update = serializer.update(
-                            instance=task, validated_data=request.data)
+                            instance=task, validated_data=payload)
                         if update:
-                            update.save()
+                            # update.save()
                             custom_response = get_custom_response(
                                 success=True, message="Sucessful", data=serializer.data, status=200)
                             return custom_response
+                    else:
+                        error = get_custom_response(data=serializer.errors)
+                        return error
+
                 else:
                     error = get_custom_response(data=serializer.errors)
                     return error
 
         except Exception as e:
+            print(e, 'e========')
             response = get_custom_response()
             return response
 
