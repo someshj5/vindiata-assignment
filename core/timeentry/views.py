@@ -154,7 +154,7 @@ def get_project_fields(request):
                 success=True, message="Sucessful", data=project_fields, status=200)
             return custom_response
         else:
-            error = get_custom_response(data=serializer.errors)
+            error = get_custom_response()
             return error
 
     except Exception as e:

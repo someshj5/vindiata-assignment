@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from auth.serializers import UserSerializer
+from .serializers import UserSerializer
 from django.contrib.auth.models import User
 import jwt
 from django.contrib.auth import authenticate, login
